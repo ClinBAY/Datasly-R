@@ -1,6 +1,6 @@
 # Datasly <img src="assets/img/datasly-logo.svg" align="right" width="120" />
 
-**Author**:  Christos Stylianou
+**Author**:  [Christos Stylianou] (https://www.linkedin.com/in/christos-stylianou-9b94b226/)
 
 # Overview
 
@@ -13,10 +13,12 @@ This R package gives ability to R users to open data frames, tibbles and 2D matr
 
 # Installation
 
-**Pre-requisites**
+**Note about Datasly software installation**
 
-First of all, you need to install Datasly free software from the ClinBAY website: [https://clinbay.com/datasly](https://clinbay.com/datasly).
+The datasly software will be installed automatically by the R package when using it, if it is not yet installed.
+You can also install manually the Datasly free software from the ClinBAY website: [https://clinbay.com/datasly](https://clinbay.com/datasly).
 Once installed, the software binaries will be executed from R.
+Datasly is only intented to work on Microsoft Windows operating system.
 
 **RStudio users**
 
