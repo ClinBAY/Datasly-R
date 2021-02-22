@@ -1,6 +1,6 @@
 # Datasly <img src="assets/img/datasly-logo.svg" align="right" width="120" />
 
-**Author**:  [Christos Stylianou] (https://www.linkedin.com/in/christos-stylianou-9b94b226/)
+**Author**:  [Christos Stylianou](https://www.linkedin.com/in/christos-stylianou-9b94b226/)
 
 # Overview
 
