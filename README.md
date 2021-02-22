@@ -13,7 +13,13 @@ This R package gives ability to R users to open data frames, tibbles and 2D matr
 
 # Installation
 
+**Pre-requisites**
+
+First of all, you need to install Datasly free software from the ClinBAY website: [https://clinbay.com/datasly](https://clinbay.com/datasly).
+Once installed, the software binaries will be executed from R.
+
 **RStudio users**
+
 Go to "Tools" and then "Install Packages"
 Choose "Install from Package archive file"
 Click "Browse"
@@ -21,12 +27,14 @@ Select your package file (".zip" for Binary or ".tar.gz" for Source)
 
 
 **Rgui users**
+
 Type the following command in R Console:
 install.packages("C:/pathofsavedzipfolder/Datasly_0.2.0.zip") for Binary
 or
 install.packages("C:/pathofsavedzipfolder/Datasly_0.2.0.tar.gz") for Source
 
 ** Install from GitHub**
+
 First, you need to install the devtools package. You can do this from CRAN. Invoke R and then type
 ```R
 install.packages("devtools")
@@ -44,3 +52,14 @@ install_github("ClinBAY/Datasly-R")
 
 # Usage
 Use the *Datasly* function to open one or several data frames, tibbles and 2D matrice.
+
+```R
+library(Datasly)
+data(mtcars)
+data(BOD)
+Datasly(mtcars,BOD)
+```
+
+# How it works?
+
+When executing the *Datasly* function to open data from R, the data is saved into a temporary folder as a .RData file, and Datasly is executed in batch mode to open it.
