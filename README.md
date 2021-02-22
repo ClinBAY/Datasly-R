@@ -78,3 +78,9 @@ When executing the *Datasly* function to open data from R, the data is saved int
 - Uses the new native support from Datasly for RData files.
 - Allows the viewing of tibble and matrices in addition to the already available data.frames of the previous version
 - Enables to open multiple data from memory into a single Datasly session with only one call
+
+# Contact
+
+Feel free to contact us at github@clinbay.com or via the Discussion GitHub panel!
+
+ClinBAY is a [Biometrics CRO expert in Statistics](https://www.clinbay.com).
