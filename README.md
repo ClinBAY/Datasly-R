@@ -68,13 +68,13 @@ When executing the *Datasly* function to open data from R, the data is saved int
 
 # Main changes history
 
-** v0.1.0 (7-Sep-2020) **
+**v0.1.0 (7-Sep-2020)**
 - First version of the package
 
-** v0.2.0 (25-Jan-2021) **
+**v0.2.0 (25-Jan-2021)**
 - Bug fixes and improved setup functionality
 
-** v1.0.1 (1-Feb-2021) **
+**v1.0.1 (1-Feb-2021)**
 - Uses the new native support from Datasly for RData files.
 - Allows the viewing of tibble and matrices in addition to the already available data.frames of the previous version
 - Enables to open multiple data from memory into a single Datasly session with only one call
