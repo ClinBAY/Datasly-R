@@ -3,9 +3,10 @@ Type: Package
 Title: Opens Datasly directly through R
 Version: 1.0.1
 Author: Christos Stylianou
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Maintainer: ClinBAY <github@clinbay.com>
+Description: Datasly is a light-weight and powerful data visualization tool developed by ClinBAY, which can be downloaded for free.
+It can be used to view, filter, sort, query data tables in SAS™ (.sas7bdat, .xpt), R (.RData), CSV, Excel formats.
+This R package gives ability to R users to open data frames, tibbles and 2D matrice within Datasly with a single R code line.
+License: MIT
 Encoding: UTF-8
 LazyData: true
