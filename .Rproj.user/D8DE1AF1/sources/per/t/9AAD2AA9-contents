@@ -1,0 +1,857 @@
+###############################
+##    DATA GENERATION  v2    ##
+###############################
+
+ 
+# introductory comments for purpose of use -------------------------------------
+# This program is needed (sourced) in each of the methods programs so its the the same for each single method and therefore its not method specific about this code below.
+# However it is based on the most complicated fo the methods the nTTP, so that the full information is there for the method (nTTP) that requires full information 
+# and it can then be simplified for the full information to a less informative information for the methods that need simpler infrmation as input.
+# the information is from in terms of nTTP and the is used to derive the same information in terms of POMMM categories and DLT (yes/no) representation of the same information
+
+# comments, clarifications, examples for steps of this code were added below 
+# Dimitris Kontos, ClinBay 12JAN2021 
+#-------------------------------------------------------------------------------
+
+
+
+##weights matrix
+weights.mat<-matrix(c(0,0.5,0.75,1,1.5,
+                      0,0.5,0.75,1,1.5,
+                      0,0,0,0.5,1),nrow=3,ncol=5,byrow=5)
+# weights.mat => example (full) ------------------------------------------------
+  # weights matrix dimension 5 columns (one for each grades 0,1,2,3,4) by 3 rows (one for each of 3 types of AE assumed for this specific example)
+  # Assuming 3 TYPES OF AEs with grades 0,1,2,3,4. Grade 5 death not included. Grade 0 corresponds to no AE recorded.
+  # weights for each grade and for each type of AE used here are taken from Jun et al 2017, Table 1 on page 21
+
+          # > weights.mat
+          #     [,1] [,2] [,3] [,4] [,5]
+          #[1,]    0  0.5 0.75  1.0  1.5
+          #[2,]    0  0.5 0.75  1.0  1.5
+          #[3,]    0  0.0 0.00  0.5  1.0
+
+#-------------------------------------------------------------------------------
+
+#gives the nTTP value for each of the 125 (5x5x5) combinations of event
+nTTP_array<-array(dim=c(5,5,5))
+for(i in 1:5){
+  for(j in 1:5){
+    for(k in 1:5){
+      # derivation here follows from the equation (1) on page 4 in Jun et al 2017
+      nTTP_array[i,j,k]<-sqrt(
+                              (weights.mat[1,i])^2+
+                                    (weights.mat[2,j])^2+
+                                        (weights.mat[3,k])^2
+                              )/2.5
+    }
+  }
+}
+# nTTP array => example (partial) ----------------------------------------------
+  # gives the nTTP value for each of the 125 (5x5x5) possible combinations 
+  # of AE grades grades (0,1,2,3,4) the 3 different types of AEs could obtain during a cycle at a particular dose for a single patient.
+  # for example the array element corresponding to position 1,1,1, nTTP=0.0 is the scenario where the nTTP value is derived based on the weights where 
+  # the maximum grade for all 3 AE types is equal to grade 0
+  # the array element corresponding to position 3,4,1, is the scenario where the nTTP value 0.5 is derived based on the weights where we have max 
+  # grade of 2 for AE type 1,max grade of 3 for AE type 2 and max grade of 0 for AE type 3.
+
+            # > nTTP_array
+            # , , 1
+            # 
+            #      [,1]      [,2]      [,3]      [,4]      [,5]
+            # [1,]  0.0 0.2000000 0.3000000 0.4000000 0.6000000
+            # [2,]  0.2 0.2828427 0.3605551 0.4472136 0.6324555
+            # [3,]  0.3 0.3605551 0.4242641 0.5000000 0.6708204
+            # [4,]  0.4 0.4472136 0.5000000 0.5656854 0.7211103
+            # [5,]  0.6 0.6324555 0.6708204 0.7211103 0.8485281
+            # 
+            # , , 2
+            # 
+            #      [,1]      [,2]      [,3]      [,4]      [,5]
+            # [1,]  0.0 0.2000000 0.3000000 0.4000000 0.6000000
+            # [2,]  0.2 0.2828427 0.3605551 0.4472136 0.6324555
+            # [3,]  0.3 0.3605551 0.4242641 0.5000000 0.6708204
+            # [4,]  0.4 0.4472136 0.5000000 0.5656854 0.7211103
+            # [5,]  0.6 0.6324555 0.6708204 0.7211103 0.8485281
+
+#-------------------------------------------------------------------------------
+
+## In this section below the objective is to turn this array into a vector for kind of simplicity of working out what the outcome for given patient is based on the 
+
+index_125_04<-array(NA,c(5,5,5))
+index_125<-array(NA,c(5,5,5))
+# index_125_04 / index_125 => example (partial) --------------------------------
+  # creates 2 arrays of dimensions (5x5x5) where all elements are set to NA for the start. Arrays to be used at subsequent derivations
+
+              # > index_125_04
+              # , , 1
+              # 
+              #      [,1] [,2] [,3] [,4] [,5]
+              # [1,]   NA   NA   NA   NA   NA
+              # [2,]   NA   NA   NA   NA   NA
+              # [3,]   NA   NA   NA   NA   NA
+              # [4,]   NA   NA   NA   NA   NA
+              # [5,]   NA   NA   NA   NA   NA
+              # 
+              # , , 2
+              # 
+              #      [,1] [,2] [,3] [,4] [,5]
+              # [1,]   NA   NA   NA   NA   NA
+              # [2,]   NA   NA   NA   NA   NA
+              # [3,]   NA   NA   NA   NA   NA
+              # [4,]   NA   NA   NA   NA   NA
+              # [5,]   NA   NA   NA   NA   NA
+              
+              # > index_125
+              # , , 1
+              # 
+              #      [,1] [,2] [,3] [,4] [,5]
+              # [1,]   NA   NA   NA   NA   NA
+              # [2,]   NA   NA   NA   NA   NA
+              # [3,]   NA   NA   NA   NA   NA
+              # [4,]   NA   NA   NA   NA   NA
+              # [5,]   NA   NA   NA   NA   NA
+              # 
+              # , , 2
+              # 
+              #      [,1] [,2] [,3] [,4] [,5]
+              # [1,]   NA   NA   NA   NA   NA
+              # [2,]   NA   NA   NA   NA   NA
+              # [3,]   NA   NA   NA   NA   NA
+              # [4,]   NA   NA   NA   NA   NA
+              # [5,]   NA   NA   NA   NA   NA
+
+#-------------------------------------------------------------------------------
+
+for(i in 1:5){
+  for(j in 1:5){
+    for(k in 1:5){
+      index_125_04[i,j,k]<-max(c(i,j,k))-1
+    }
+  }
+}
+# index_125_04 new => example (partial) ----------------------------------------
+  # at each position inserts the maximum grade across all 3 types of AE type that corresponds to that array position.
+  # for example the position 1,1,1 of the array will have a value 0 denoting that in this case
+  # the maximum grade for all 3 AE types is equal to grade 0
+  # for example the position 3,4,1, of the array will have a value 3 denoting that in this case
+  # the maximum grade across all 3 AE types is equal to grade grade 3 and relates to AE Type 1
+
+        # > index_125_04
+        # , , 1
+        # 
+        #      [,1] [,2] [,3] [,4] [,5]
+        # [1,]    0    1    2    3    4
+        # [2,]    1    1    2    3    4
+        # [3,]    2    2    2    3    4
+        # [4,]    3    3    3    3    4
+        # [5,]    4    4    4    4    4
+        # 
+        # , , 2
+        # 
+        #      [,1] [,2] [,3] [,4] [,5]
+        # [1,]    1    1    2    3    4
+        # [2,]    1    1    2    3    4
+        # [3,]    2    2    2    3    4
+        # [4,]    3    3    3    3    4
+        # [5,]    4    4    4    4    4
+
+#-------------------------------------------------------------------------------
+ 
+grades<-c()
+for(grade in 0:4){
+  grades[grade+1]<-sum(index_125_04==grade)
+}
+# grades => example (full) -----------------------------------------------------
+  # for the 5x5x5 combinations of grades (0,1,2,3,4) of the 3 AE types (index_125_04 new)
+  # we count how many times each grade is considered as the max one for each combination.
+  # max grade 0 occurs 1 out of the 125 , max grade 1 occurs 7 times out of the 125, etc
+
+          # > grades
+          # [1]  1  7 19 37 61
+
+#-------------------------------------------------------------------------------
+
+# we now want to populate the previously defined array index_125 with values that represent
+# a consecutive order of the 125 combinations using a series of number from 1 to 125.
+
+index_125[1,1,1]<-1
+# index_125[1,1,1] new example (partial) ---------------------------------------
+  # the number 1 assigned below represents the fact that the first element of the array 
+  # corresponding to a situation where all AE Types obtain a max grade of 0 is the 1st in the order of the 
+  # 125 combinations
+        # > index_125
+        # , , 1
+        # 
+        #      [,1] [,2] [,3] [,4] [,5]
+        # [1,]    1   NA   NA   NA   NA
+        # [2,]   NA   NA   NA   NA   NA
+        # [3,]   NA   NA   NA   NA   NA
+        # [4,]   NA   NA   NA   NA   NA
+        # [5,]   NA   NA   NA   NA   NA
+
+#-------------------------------------------------------------------------------
+
+for(grade in 1:4){
+
+  indices<-which(index_125_04==grade,arr.ind = T)
+  # indices for grade=1 example (full) -----------------------------------------
+    # it will report the 3 array coordinates position in the the 5X5X5 array 'index_125_04' 
+    # where the maximum grade for any of 3 AE types ==1 (note that there are 7 occurrences of this case according to 'grades' vector)
+
+        # > index_125_04
+        # , , 1
+        # 
+        #      [,1] [,2] [,3] [,4] [,5]
+        # [1,]    0    1    2    3    4
+        # [2,]    1    1    2    3    4
+        # [3,]    2    2    2    3    4
+        # [4,]    3    3    3    3    4
+        # [5,]    4    4    4    4    4
+
+    # the places where we have a value of 1 are the 'index_125_04' dimensions 
+    # [2,1,1],[1,2,1],[2,1,1] for the first 3 out of 7 in total cases
+  
+        # > indices
+        #      dim1 dim2 dim3
+        # [1,]    2    1    1
+        # [2,]    1    2    1
+        # [3,]    2    2    1
+        # [4,]    1    1    2
+        # [5,]    2    1    2
+        # [6,]    1    2    2
+        # [7,]    2    2    2
+  
+  #----------------------------------------------------------------------------- 
+  grades_vec<-c(1:(grades[grade+1]))+sum(grades[1:(grade)])
+  # grades_vec for grade=1 example (partial) -------------------------------------
+    # creates vector of consecutive ordered numbers from 2 to the number of cases 
+    # where the maximum grade=1 for any of 3 AE types, in that case 
+    # 2,3,4,5,6,7,8. 
+    # Note 1 is already used before for the case where maximum grade=0 for all 3 AE types
+  
+        # > grades_vec
+        # [1] 2 3 4 5 6 7 8
+  
+  #-------------------------------------------------------------------------------    
+  for(j in 1:nrow(indices)){
+    index_125[indices[j,1], indices[j,2],indices[j,3]]<-grades_vec[j]
+  }
+  # index_125 for grade=1 example (partial) ------------------------------------
+    # takes the ordered series of consecutive numbers created above and replaces 
+    # the NA values of the array index_125 at positions in that array that correspond 
+    # to values of the rows derived in the "indices" array above 
+  
+        # > index_125
+        # , , 1
+        # 
+        #      [,1] [,2] [,3] [,4] [,5]
+        # [1,]    1    3   NA   NA   NA
+        # [2,]    2    4   NA   NA   NA
+        # [3,]   NA   NA   NA   NA   NA
+        # [4,]   NA   NA   NA   NA   NA
+        # [5,]   NA   NA   NA   NA   NA
+        # 
+        # , , 2
+        # 
+        #      [,1] [,2] [,3] [,4] [,5]
+        # [1,]    5    7   NA   NA   NA
+        # [2,]    6    8   NA   NA   NA
+        # [3,]   NA   NA   NA   NA   NA
+        # [4,]   NA   NA   NA   NA   NA
+        # [5,]   NA   NA   NA   NA   NA
+  #-----------------------------------------------------------------------------
+}
+# index_125 final example (partial) --------------------------------------------
+  # so we end up above with an array 'index_125' that has elements coming from a 
+  # unique ordered number sequence from 1 to 125 in each of the 5x5x5=125 positions 
+
+          # > index_125
+          # , , 1
+          # 
+          #      [,1] [,2] [,3] [,4] [,5]
+          # [1,]    1    3   11   31   69
+          # [2,]    2    4   12   32   70
+          # [3,]    9   10   13   33   71
+          # [4,]   28   29   30   34   72
+          # [5,]   65   66   67   68   73
+          # 
+          # , , 2
+          # 
+          #      [,1] [,2] [,3] [,4] [,5]
+          # [1,]    5    7   16   38   78
+          # [2,]    6    8   17   39   79
+          # [3,]   14   15   18   40   80
+          # [4,]   35   36   37   41   81
+          # [5,]   74   75   76   77   82
+
+#-------------------------------------------------------------------------------
+
+##in order to generate data to correspond to benchmark, we must vectorize the array
+vectorize_array<-function(array_in,INDEX=index_125){
+  dims<-c(5,5,5)
+  vector_out<-c()
+  for(i in 1:dims[1]){
+    for(j in 1:dims[2]){
+      for(k in 1:dims[3]){
+        vector_out[INDEX[i,j,k]]<-array_in[i,j,k]
+      }
+    }
+  }
+  
+  return(vector_out)
+}
+
+
+#take the index of the vector, gives the indices of the array
+index_array<-function(index_in,INDEX=index_125){
+  vector_out<-as.vector(which(INDEX==index_in,arr.ind = T))
+  return(vector_out)
+}
+
+
+#takes the grade, gives the category for POMM method
+grade2cat<-function(grade){
+  if(grade==5){
+    out<-3
+  }else{
+    out<-max(grade-1,1)
+  }
+  return(out)
+}
+
+
+cond_cyc_func<-function(cond_vec){
+  length_c<-length(cond_vec)
+  p3<-c()
+  p3[1]<-cond_vec[1]
+  for ( i in 2:length_c){
+    p3[i]<-prod(1-cond_vec[1:(i-1)])*cond_vec[i]
+  }
+  return(sum(p3))
+}
+
+
+ind_array_S<-function (tru_cyc1, cycle_num, nextdose,cycle_dec) 
+{
+  #decreasing for subsequent cycles
+    # example for next line calculations P(DLT )2 = (P(DLT)1) /2 and  P(DLT )3 = P(DLT)1 /4
+  tru_cyc_dose<-tru_cyc1[nextdose]*(cycle_dec^(cycle_num-1))
+
+  revcumsum5<-c(1-0.5*tru_cyc_dose*c(0:2),1-0.5*tru_cyc_dose*c(4,5))
+    # replace any negative probabilities with 0 - a case that could happen for grade 0 if p cycle 1 >0.4
+  revcumsum5[revcumsum5<0]<-0
+    # reverse the order of probabilities to correspond to grade 0,1,2,3,4 in ascending order
+  cumsum5 <- rev(revcumsum5)
+  
+  div_vec <- c()
+  div_vec[1] <- 1
+  # creates an array of dimensions (5x5x5 same dimensions as the nTTP array) where each element will be the relevant probability on NON DLT as derived above  based on the combination of grades for each type of AE.
+  array_out <- array(NA, dim = c(5, 5, 5))
+  # element 1,1,1 will correspond to P(Grade 0) = 1-5p/2 as derived above to be the first element of cumsum5
+  array_out[1, 1, 1] <- cumsum5[1]
+  for (i in 2:5) {
+    # re calculates the number of (5x5x5) combination of the 3 types of AEs where we have at least 1 grade 1 AE (7 cases), at least 1 grade 2 cases (19) ,etc
+    div_vec[i] <- (i^3) - sum(div_vec[c(1:(i - 1))])
+    # derives the non cumulative probabilities for each grade combination for the cases described above, by subtracting cumulative consecutive probabilities and dividing by the number of cases
+    # where we have at least 1 grade 1 AE (7 cases), at least 1 grade 2 cases (19) ,etc and puts them into the relevant positions of the 5x5x5 array
+    array_out[i, , ] <- array_out[, i, ] <- array_out[, ,i] <- (cumsum5[i] - cumsum5[i - 1])/div_vec[i]
+    #>>>>>>>>>>> ????? I don't understand why we divide by div_vec[i] 
+  }
+  return(array_out)
+}
+
+# PATIENT DATA FRAMES ----------------------------------------------------------
+  #Each row is a new cycle. Each patient can have from 1 to 'ncycles' rows, depending on response.
+  #patient_ID : unique index of patient
+  #Y_obs : category for POMM method
+  #cycle_num : cycle number
+  #dose_level : dose level (not value)
+  #entry_time : time of entry 
+  #time_of : time of this cycle's observation in the trial
+  #DLT : 1=DLT in this cycle , 0=no DLT in this cycle
+  #nTTP : nTTP value for this cycle
+  #max_grade : maximum toxicity grade observed in this cycle for this patient
+#-------------------------------------------------------------------------------
+
+##for direction comparison:
+
+# input used for examples presented below for 'single_patient_nTTP' ------------
+    #   patient=1
+    #   tru_cyc1=0.2 #20% DLT rate in cycle 1
+    #   ncycles=3
+    #   thenextdose=1 #dose level (not value)
+    #   entry_time=
+    #   nTTP_array=nTTP_array #already created in this program above
+    #   rands<-runif(1) # = 0.488306 a random value from a uniform distribution for each for each subject
+    #   cycle_dec=0.5 # For simplicity we assume that this probability ('tru_cyc1') halves at each subsequent cycle
+
+  # see slides20Oct2020 page 9
+    # Given the probability of DLT in cycle 1, P(DLT)1, we assume a decreasing trend in subsequent cycles. 
+    # For simplicity we assume for example that this probability halves, so that for 3 cycles
+    # P(DLT)all = P(DLT)1 + (1???P(DLT)1) * P(DLT)1 /2 + (1???(P(DLT)1 ) * (1??? P(DLT)1 /2) P(DLT)1 /4
+    # we do this below for the dose level 1 of a true scenario for a single patient
+
+#-------------------------------------------------------------------------------  
+
+#generates a single patient's COMPLETE outcome as a data-frame
+single_patient_nTTP<-function(patient,tru_cyc1,ncycles,thenextdose,entry_time,nTTP_array,rands,cycle_dec){
+  
+  Y_obs<-c()
+  nTTP_obs<-c()
+  nTTP_obs_ind<-c()
+  
+  # offset conditional vector of DLT probs
+  cond_vec_off<-c(0,tru_cyc1[thenextdose]*(cycle_dec^(c(0:(ncycles-2)))))
+  # cond_vec_off example (partial) for: ---------------------------------------- 
+    # tru_cyc1=0.2, 
+    # thenextdose=1 #dose level (not value), 
+    # ncycles=3 , 
+    # cycle_dec=0.5
+  
+    # see slides20Oct2020 page 9
+      # Given the probability of DLT in cycle 1, P(DLT)1=tru_cyc1, we assume a decreasing trend in subsequent cycles. 
+      # For simplicity we assume for example that this probability halves (cycle_dec=0.5), so that for 3 cycles
+      # assuming the above, the offset is:
+        # 0 for the first cycle by default, 
+        # 0.2 for cycle 2, i.e equal to P(DLT)1
+        # 0.1 for cycle 3. i.e equal to P(DLT)2= 1/2 * P(DLT)1
+      # offset of each cycle is equal to the P(DLT) of the previous cycle
+
+          # > cond_vec_off
+          # [1] 0.00 0.20 0.10
+  
+  #-----------------------------------------------------------------------------  
+  
+  #reduce the cutoffs for subsequent cycles
+  DLT_cutoffs<-c(1,sapply(c(2:ncycles), function(x) 1-cond_cyc_func(cond_vec_off[1:x])))
+  # DLT_cutoffs example (partial) for: -----------------------------------------
+    # tru_cyc1=0.2, ncycles=3 , cycle_dec=0.5
+  
+    # using funtion 'cond_cyc_func' defined above with input 'cond_vec_off' we get
+      # for cycle 2=(1 ???P(DLT)1 ) = 1 - 0.20  
+      # for cycle 3=(1???(P(DLT)1 )*(1??? P(DLT)1 /2) = (1-0.20)*(1-0.10)
+  
+        # > DLT_cutoffs
+        # [1] 1.00 0.80 0.72
+  
+  #-----------------------------------------------------------------------------  
+ 
+  rand<-rands[patient]
+  # rand example for: patient =1 -----------------------------------------------
+    # this is derived in main program of each method or benchmark 
+    # and is defined as rands<-runif(co_size*ncohorts) 
+    # assigns a random value from a uniform distribution for each for each subject
+
+        # > rand
+        # [1] 0.9541577
+  
+  #----------------------------------------------------------------------------- 
+  for(i in 1:ncycles){
+    individual_array<-ind_array_S(tru_cyc1,cycle_num=i,thenextdose,cycle_dec)
+    # individual_array example (partial) for: ----------------------------------
+      # tru_cyc1=0.2, 
+      # cycle_num=1 , 
+      # thenextdose=1, 
+      # cycle_dec=0.5
+       # using function 'ind_array_S' generates the individual array of probabilities of each combination
+    
+        # ind_array_S ----------------------------------------------------------
+            # ind_array_S<-function (tru_cyc1, cycle_num, nextdose,cycle_dec) 
+            # {
+            #   tru_cyc_dose<-tru_cyc1[nextdose]*(cycle_dec^(cycle_num-1)) -----
+    
+                  # calculates the DLT probability of each cycle based on the assumptions of 'cycle_dec'=0.5
+    
+                    # for cycle 1 P(DLT)1
+                      # tru_cyc1[nextdose]*(cycle_dec^(cycle_num-1))
+                                 # => 0.2 *(0.5^(1-1))
+                      # > tru_cyc_dose
+                      # [1] 0.2
+    
+                    # for cycle 2 P(DLT)2=P(DLT)1 /2
+                      # tru_cyc1[nextdose]*(cycle_dec^(cycle_num-1))
+                                # =>  0.2 *(0.5^(2-1))
+                      # > tru_cyc_dose
+                      # [1] 0.1
+    
+                    # for cycle 3 P(DLT)3=P(DLT)2 /2==P(DLT)1 /4
+                      # tru_cyc1[nextdose]*(cycle_dec^(cycle_num-1))
+                                # =>  0.2 *(0.5^(3-1))
+                      # > tru_cyc_dose
+                      # [1] 0.05
+    
+            #-------------------------------------------------------------------
+            #   this is for the simple distribution of grades - can be changed depending on requirements
+            #   revcumsum5<-c(1-0.5*tru_cyc_dose*c(0:2),1-0.5*tru_cyc_dose*c(4,5)) -----
+    
+                  # calculates cumulative occurrence probabilities for grades in 
+                  # reverse order (grade 4,3,2,1,0) based on the definitions/rules below
+
+                # see slides20Oct2020 page 9
+                  # The toxicity probability for a given cycle P(DLT) = p assumed for a dose
+                  # is used to assign toxicity probability for each grade 4,3,2,1,0 in the
+                  # following way.
+                
+                  # Probability of occurrence for grades 4,3 considered as a DLT for Ph1 study:
+                    # P(Grade 4) = p/2
+                    # P(Grade 3) = p/2
+                  # Probability of occurrence for grades 2,1,0 considered as a DLT for Ph1 study: 
+                    # P(Grade 2) = p
+                    # P(Grade 1) = p/2
+                    # P(Grade 0) = 1-5p/2
+                  
+                  # Based on the above the cumulative probabilities for grades 0,1,2,3,4 will be
+                    # cum P(Grade 0) = P(Grade 0) = 1-5p/2
+                    # cum P(Grade 1) = cum P(Grade 0) + P(Grade 1) = 1-5p/2 +p/2 = 1-2p
+                    # cum P(Grade 2) = cum P(Grade 1) + P(Grade 2) = 1-2p+p = 1-p
+                    # cum P(Grade 3) = cum P(Grade 2) + P(Grade 3) = 1-p+p/2 = 1-p/2
+                    # cum P(Grade 4) = cum P(Grade 3) + P(Grade 4) = 1-p/2+p/2 = 1
+                    
+                  # in reverse order (grade 4,3,2,1,0) this can be summarized by the formula of 
+                  # c(1-0.5*tru_cyc_dose*c(0:2),1-0.5*tru_cyc_dose*c(4,5)) defined in 'revcumsum5'  
+          
+                        # > revcumsum5
+                        # [1] 1.0 0.9 0.8 0.6 0.5
+    
+            #-------------------------------------------------------------------
+            #   revcumsum5[revcumsum5<0]<-0 ------------------------------------
+    
+                  # replace any negative cumulative probabilities with 0 - 
+                  # a case that could happen for grade 0 if p true cycle 1 >0.4
+    
+            #-------------------------------------------------------------------
+            #   cumsum5 <- rev(revcumsum5) -------------------------------------
+    
+                  # reverse the order of probabilities to correspond to 
+                  # grade 0,1,2,3,4 in ascending order
+    
+                        # > cumsum5
+                        # [1] 0.5 0.6 0.8 0.9 1.0
+    
+            #   ----------------------------------------------------------------
+            #   div_vec <- c()
+            #   div_vec[1] <- 1
+            #   array_out <- array(NA, dim = c(5, 5, 5)) -----------------------
+                  # create a temporary array with 5x5x5 = 125 element to be used for 
+                  # later derivations.
+                  # this array will be filled with the specific 125 partial probabilities 
+                  # that correspond to each combinations of max grade (0,1,2,3,4)
+                  # for the 3 AE types
+                  
+            #   ----------------------------------------------------------------
+            #   array_out[1, 1, 1] <- cumsum5[1] -------------------------------
+        
+                    # > array_out
+                    # , , 1
+                    # 
+                    #     [,1] [,2] [,3] [,4] [,5]
+                    # [1,]  0.5   NA   NA   NA   NA
+                    # [2,]   NA   NA   NA   NA   NA
+                    # [3,]   NA   NA   NA   NA   NA
+                    # [4,]   NA   NA   NA   NA   NA
+                    # [5,]   NA   NA   NA   NA   NA
+            #   ----------------------------------------------------------------                
+            #   for (i in 2:5) {
+            #     div_vec[i] <- (i^3) - sum(div_vec[c(1:(i - 1))]) -------------
+                  # counts how many times each grade is considered as the max one for each combination.
+                  # max grade 0 occurs 1 (div_vec[1] <- 1) out of the 125 , max grade 1 occurs 7 times out of the 125, etc
+                  # similar derivations as 'grades'grades_vec' above
+    
+                      # > div_vec
+                      # [1]  1  7 19 37 61 
+
+            #     --------------------------------------------------------------
+            #     array_out[i, , ] <- array_out[, i, ] <- array_out[, ,i] <- (cumsum5[i] - cumsum5[i - 1])/div_vec[i] ----
+                    
+                    # We replace NAs in of the 5x5x5 array with the actual non cumulative probabilities for each combination of max grades for each of the 3 types AEs
+                    # based on the true probability of a specific grade that we have derived in 
+                        # > cumsum5
+                        # [1] 0.5 0.6 0.8 0.9 1.0
+    
+                    # and adjust for the number of cases this combination can occur by dividing the relevatn grade probability by this number of cases.
+                    
+                    # example for case where i=1 
+                    # the probability of a grade 0 is 'cusum5[1]'=0.5. There is only one way ('div_vec[1]'=1) all 3 AE types can have a max grade=0.
+                    # this situation corresponds to position array_out[1,1,1]=0.5
+    
+                    # example for case where i=2 
+                      # the probability of a grade 1 is 'cusum5[2]-'cusum5[1]'=0.6-0.5=0.1. 
+                      # there are 7 ways ('div_vec[2]'=7) at least one of the 3 AE types can have a max grade=1.
+                      # the probability for each of then is adjusted to become 0.1/7=0.01428571
+                      # and is replace in the relevant position in the array_out.
+                      # array place > [2.2.2] are also replace but these will be overwritten by results produces for iteration related to higher grades 
+                    # > array_out
+                    # , , 1
+                    # 
+                    #            [,1]       [,2]       [,3]       [,4]       [,5]
+                    # [1,] 0.50000000 0.01428571         NA         NA         NA
+                    # [2,] 0.01428571 0.01428571 0.01428571 0.01428571 0.01428571
+                    # [3,]         NA 0.01428571         NA         NA         NA
+                    # [4,]         NA 0.01428571         NA         NA         NA
+                    # [5,]         NA 0.01428571         NA         NA         NA
+    
+                    # example for case where i=3
+                    # > array_out
+                    # , , 1
+                    # 
+                    #            [,1]       [,2]       [,3]       [,4]       [,5]
+                    # [1,] 0.50000000 0.01428571 0.01052632         NA         NA
+                    # [2,] 0.01428571 0.01428571 0.01052632 0.01428571 0.01428571
+                    # [3,] 0.01052632 0.01052632 0.01052632 0.01052632 0.01052632
+                    # [4,]         NA 0.01428571 0.01052632         NA         NA
+                    # [5,]         NA 0.01428571 0.01052632         NA         NA
+    
+                     # example for case where i=4    
+                    # > array_out
+                    # , , 1
+                    # 
+                    #             [,1]        [,2]        [,3]        [,4]        [,5]
+                    # [1,] 0.500000000 0.014285714 0.010526316 0.002702703          NA
+                    # [2,] 0.014285714 0.014285714 0.010526316 0.002702703 0.014285714
+                    # [3,] 0.010526316 0.010526316 0.010526316 0.002702703 0.010526316
+                    # [4,] 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703
+                    # [5,]          NA 0.014285714 0.010526316 0.002702703          NA
+    
+                    # example for case where i=5    
+                    # > array_out
+                    # , , 1
+                    # 
+                    #             [,1]        [,2]        [,3]        [,4]        [,5]
+                    # [1,] 0.500000000 0.014285714 0.010526316 0.002702703 0.001639344
+                    # [2,] 0.014285714 0.014285714 0.010526316 0.002702703 0.001639344
+                    # [3,] 0.010526316 0.010526316 0.010526316 0.002702703 0.001639344
+                    # [4,] 0.002702703 0.002702703 0.002702703 0.002702703 0.001639344
+                    # [5,] 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344
+    
+            #     --------------------------------------------------------------    
+    
+            #   }
+            #   return(array_out)
+            # }
+    #-----------------------------------------------------------------------------
+
+    
+    individual_vector<-vectorize_array(individual_array)
+    # individual_vector example (full) ----------------------------------------
+      # converts the array to a vector object
+    
+    # > individual_vector
+    
+            # [1] 0.500000000 0.014285714 0.014285714 0.014285714 0.014285714 0.014285714 0.014285714 0.014285714 0.010526316 0.010526316
+            # [11] 0.010526316 0.010526316 0.010526316 0.010526316 0.010526316 0.010526316 0.010526316 0.010526316 0.010526316 0.010526316
+            # [21] 0.010526316 0.010526316 0.010526316 0.010526316 0.010526316 0.010526316 0.010526316 0.002702703 0.002702703 0.002702703
+            # [31] 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703
+            # [41] 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703
+            # [51] 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703 0.002702703
+            # [61] 0.002702703 0.002702703 0.002702703 0.002702703 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344
+            # [71] 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344
+            # [81] 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344
+            # [91] 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344
+            # [101] 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344
+            # [111] 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344
+            # [121] 0.001639344 0.001639344 0.001639344 0.001639344 0.001639344
+    #--------------------------------------------------------------------------- 
+    
+    individual_vector_cum<-cumsum(individual_vector)
+    # individual_vector_cum ---------------------------------------------------
+      # individual_vector_cum example (full) 
+      # derives the cumulative probabilities by summing individual consecutive probabilities of the vector
+    
+          # > individual_vector_cum
+          # [1] 0.5000000 0.5142857 0.5285714 0.5428571 0.5571429 0.5714286 0.5857143 0.6000000 0.6105263 0.6210526 0.6315789 0.6421053
+          # [13] 0.6526316 0.6631579 0.6736842 0.6842105 0.6947368 0.7052632 0.7157895 0.7263158 0.7368421 0.7473684 0.7578947 0.7684211
+          # [25] 0.7789474 0.7894737 0.8000000 0.8027027 0.8054054 0.8081081 0.8108108 0.8135135 0.8162162 0.8189189 0.8216216 0.8243243
+          # [37] 0.8270270 0.8297297 0.8324324 0.8351351 0.8378378 0.8405405 0.8432432 0.8459459 0.8486486 0.8513514 0.8540541 0.8567568
+          # [49] 0.8594595 0.8621622 0.8648649 0.8675676 0.8702703 0.8729730 0.8756757 0.8783784 0.8810811 0.8837838 0.8864865 0.8891892
+          # [61] 0.8918919 0.8945946 0.8972973 0.9000000 0.9016393 0.9032787 0.9049180 0.9065574 0.9081967 0.9098361 0.9114754 0.9131148
+          # [73] 0.9147541 0.9163934 0.9180328 0.9196721 0.9213115 0.9229508 0.9245902 0.9262295 0.9278689 0.9295082 0.9311475 0.9327869
+          # [85] 0.9344262 0.9360656 0.9377049 0.9393443 0.9409836 0.9426230 0.9442623 0.9459016 0.9475410 0.9491803 0.9508197 0.9524590
+          # [97] 0.9540984 0.9557377 0.9573770 0.9590164 0.9606557 0.9622951 0.9639344 0.9655738 0.9672131 0.9688525 0.9704918 0.9721311
+          # [109] 0.9737705 0.9754098 0.9770492 0.9786885 0.9803279 0.9819672 0.9836066 0.9852459 0.9868852 0.9885246 0.9901639 0.9918033
+          # [121] 0.9934426 0.9950820 0.9967213 0.9983607 1.0000000
+    #---------------------------------------------------------------------------    
+    
+    individual_vector_cum<-individual_vector_cum*DLT_cutoffs[i]
+    # individual_vector_cum ----------------------------------------------------
+          
+              # > DLT_cutoffs
+              # [1] 1.00 0.80 0.72
+              
+              # for cycle 1 utilize DLT_cutoffs[1]=1.00
+              # the vector will remain unchanged
+    
+              # > individual_vector_cum
+              # [1] 0.5000000 0.5142857 0.5285714 0.5428571 0.5571429 0.5714286 0.5857143 0.6000000 0.6105263 0.6210526 0.6315789 0.6421053
+    
+    #--------------------------------------------------------------------------- 
+    
+    #nTTP_obs is for nTTP
+    nTTP_obs_cyc_ind<-min(which(rand<individual_vector_cum))
+    # nTTP_obs_cyc_ind example -------------------------------------------------
+      # find the minimum number of vector position where the probability is 
+      # lower that the randomly generated tolerance limit for that subject 
+    
+            # > rand
+            # [1] 0.9541577
+    
+            # > nTTP_obs_cyc_ind
+            # [1] 98
+    #---------------------------------------------------------------------------
+    nTTP_obs_cyc<-nTTP_array[index_array(nTTP_obs_cyc_ind)[1],index_array(nTTP_obs_cyc_ind)[2],index_array(nTTP_obs_cyc_ind)[3]]
+    # nTTP_obs_cyc example -----------------------------------------------------
+        # this will use the function 'index_array' to find the position #98 in array 'index_125' created earlier
+        # this will identify the coordinates as [3,5,4], i.e a case where 
+          # index [3,,] corresponds to the maximum grade for type 1 AE = 2,
+          # index [,5,] corresponds to the maximum grade for type 2 AE = 4,
+          # index [,,4] corresponds to the maximum grade for type 3 AE = 3,
+        
+            # > index_125
+            # , , 4
+            # 
+            #       [,1] [,2] [,3] [,4] [,5]
+            # [1,]   49   53   57   61   96
+            # [2,]   50   54   58   62   97
+            # [3,]   51   55   59   63   98
+            # [4,]   52   56   60   64   99
+            # [5,]   92   93   94   95  100
+    
+      # and use the coordinates of this position in the array 'index_125' 
+      # to get the value of the 'nTTP_array' that correspond to these coordinates.
+    
+            # > nTTP_array
+            # , , 4
+            # 
+            #           [,1]      [,2]      [,3]      [,4]      [,5]
+            # [1,] 0.2000000 0.2828427 0.3605551 0.4472136 0.6324555
+            # [2,] 0.2828427 0.3464102 0.4123106 0.4898979 0.6633250
+            # [3,] 0.3605551 0.4123106 0.4690416 0.5385165 0.7000000
+            # [4,] 0.4472136 0.4898979 0.5385165 0.6000000 0.7483315
+            # [5,] 0.6324555 0.6633250 0.7000000 0.7483315 0.8717798
+    
+      # the position nTTP_array[3,5,4] corresponds to a nTTP value of 0.7
+    
+            # > nTTP_obs_cyc
+            # [1] 0.7
+    
+    #---------------------------------------------------------------------------
+    
+    #Y_obs is for POMM
+    Y_obs_cyc<-grade2cat(max(index_array(nTTP_obs_cyc_ind)))
+    # Y_obs_cyc ---------------------------------------------------------------
+    # it uses function index 'index_array' to find the position #98 in array 'index_125' created earlier
+      # this will identify the coordinates as [3,5,4], i.e a case where 
+      # the maximum grade for type 1 AE = 2,
+      # the maximum grade for type 2 AE = 4,
+      # the maximum grade for type 3 AE = 3,
+    
+          # > index_125
+          # , , 4
+          # 
+          #       [,1] [,2] [,3] [,4] [,5]
+          # [1,]   49   53   57   61   96
+          # [2,]   50   54   58   62   97
+          # [3,]   51   55   59   63   98
+          # [4,]   52   56   60   64   99
+          # [5,]   92   93   94   95  100
+    
+      # the maximum grade across the 3 types of AEs is  grade 4 corresponding to type 2 AE,
+      # according to POMM definition of categories for any AE grade 3-5 toxicity it will
+      # be assigned to category 3 of the POMM model categories (1,2,3)
+    
+          # > Y_obs_cyc
+          # [1] 3
+    #---------------------------------------------------------------------------
+    
+    Y_obs<-c(Y_obs,Y_obs_cyc) #vector of observations for one patient on all cycles
+    # Y_obs -------------------------------------------------------------------
+      # stores the POMM Y category for a cycle (this example cycle 1) for this subject
+    
+        # > Y_obs
+        # [1] 3
+    #---------------------------------------------------------------------------
+    
+    nTTP_obs<-c(nTTP_obs,nTTP_obs_cyc)
+    # nTTP_obs ----------------------------------------------------------------
+      # stores the nTTP value for a cycle (this example cycle 1) for this subject
+    
+          # > nTTP_obs
+          # [1] 0.7
+    #---------------------------------------------------------------------------
+    
+    nTTP_obs_ind<-c(nTTP_obs_ind,nTTP_obs_cyc_ind)
+
+    # nTTP_obs_ind -------------------------------------------------------------
+      # stores the nTTP value ordered position for a cycle (this example cycle 1) for this subject
+    
+          # > nTTP_obs_ind
+          # [1] 98
+    #---------------------------------------------------------------------------
+    
+    
+    if(max(Y_obs)==3){
+      break
+      # break for loop ---------------------------------------------------------
+        # stop iteration to next cycle if POMM category in current cycle is already 3
+      #-------------------------------------------------------------------------
+      
+    }
+  }
+  
+  if(max(Y_obs)==3){
+    # check if there is a POMM category at any cycle that is already 3,
+      # if that is true do the following
+    
+    Y_obs<-Y_obs[c(1:(min(which(Y_obs==3))))]
+    # Y_obs --------------------------------------------------------------------
+     # only keep Y_obs (POMM categories) for cycles up to the first cycle having a POMM category=3
+            # > Y_obs
+            # [1] 3
+    #---------------------------------------------------------------------------
+    
+    nTTP_obs<-nTTP_obs[c(1:(min(which(Y_obs==3))))]
+    # nTTP_obs -----------------------------------------------------------------
+      # only keep nTTP_obs (nTTP values) for cycles up to the first cycle having a POMM category=3
+          # > nTTP_obs
+          # [1] 0.7
+    #---------------------------------------------------------------------------
+  }
+  
+  
+  out_data<-data.frame(patient,Y_obs,c(1:(length(Y_obs))),thenextdose,entry_time,entry_time+c(1:(length(Y_obs))),
+                       as.numeric(Y_obs==3),nTTP_obs,max(unlist(lapply(nTTP_obs_ind,index_array)))-1)
+  # out_data -------------------------------------------------------------------
+    # DLT derivation
+      # DLT is derived in this stage as DLT occurrence =1 if the relevant POMM category is 3, 
+      # which corresponds by definition, to AE grade 3-5 toxicity 
+  
+  # max_grade derivation
+    # max_grade is derived in this stage as the max grade occurred across the types of 3 AEs 
+    # this is done by utilizing the position (coordinates) in the 'index_125' array that corresponds to the ordered value of 'nTTP_obs_ind'=98
+    # this will identify the coordinates as [3,5,4], i.e a case where 
+      # index [3,,] corresponds to the maximum grade for type 1 AE = 2,
+      # index [,5,] corresponds to the maximum grade for type 2 AE = 4,
+      # index [,,4] corresponds to the maximum grade for type 3 AE = 3,
+  #-----------------------------------------------------------------------------
+  names(out_data)<-c("patient_ID","Y_obs","cycle_num","dose_level","entry_time","time_of","DLT","nTTP","max_grade")
+  return(out_data)
+
+  # out_data example -----------------------------------------------------------
+    # 1 row for subject=1 in cycle 1 at the dose level 1
+
+        # > out_data
+        #     patient_ID Y_obs cycle_num dose_level entry_time time_of DLT nTTP max_grade
+        # 1            1     3         1          1          0       1   1  0.7         4
+  # ----------------------------------------------------------------------------
+}
+
+#generates multiple patients' COMPLETE outcome as a data-frame
+  # it basically call the single patients function many times for each patient and builds up the full dataset of subjects in the trial
+multiple_patients_nTTP<-function(patient_ID1,tru_cyc1,ncycles,thenextdose,entry_time,nTTP_array,num_patients,rands,cycle_dec){
+  out_data<-single_patient_nTTP(patient_ID1,tru_cyc1,ncycles,thenextdose,entry_time,nTTP_array,rands,cycle_dec)
+  for(i in 2:num_patients){
+    out_data<-rbind(out_data,single_patient_nTTP(patient_ID1+i-1,tru_cyc1,ncycles,thenextdose,entry_time,nTTP_array,rands,cycle_dec))
+  }
+  return(out_data)
+}
+
+
