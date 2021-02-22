@@ -35,7 +35,7 @@ install.packages("C:/pathofsavedzipfolder/Datasly_0.2.0.zip") for Binary
 or
 install.packages("C:/pathofsavedzipfolder/Datasly_0.2.0.tar.gz") for Source
 
-** Install from GitHub**
+**Install from GitHub**
 
 First, you need to install the devtools package. You can do this from CRAN. Invoke R and then type
 ```R
