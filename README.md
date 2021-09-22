@@ -16,7 +16,7 @@ This R package gives ability to R users to open data frames, tibbles and 2D matr
 **Note about Datasly software installation**
 
 The datasly software will be installed automatically by the R package when using it, if it is not yet installed.
-You can also install manually the Datasly free software from the ClinBAY website: <a href="https://clinbay.com/datasly">https://clinbay.com/datasly</a>.
+You can also install manually the Datasly free software from the ClinBAY website: [https://clinbay.com/datasly](https://clinbay.com/datasly).
 Once installed, the software binaries will be executed from R.
 Datasly is only intented to work on Microsoft Windows operating system.
 
